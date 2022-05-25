@@ -751,22 +751,15 @@ class MiniGridEnv(gym.Env):
         """Compute a hash that uniquely identifies the current state of the environment.
         """
         sample_hash = hashlib.sha256()
-        grid_hash = self.hash_grid()
-
-        to_encode = [grid_hash, self.agent_pos, self.agent_dir]
-        for item in to_encode:
-            sample_hash.update(str(item).encode('utf8'))
-
-        return int.from_bytes(sample_hash.digest(), "little")
-
-    def hash_grid(self):
-        retr = []
         for g in self.grid.grid:
             if g is None:
-                retr.extend((OBJECT_TO_IDX['empty'], 0, 0))
+                sample_hash.update(bytes((OBJECT_TO_IDX['empty'], 0, 0)))
             else:
-                retr.extend(g.encode())
-        return retr
+                sample_hash.update(bytes(g.encode()))
+        sample_hash.update(bytes(self.agent_pos))
+        sample_hash.update(bytes(self.agent_dir))
+
+        return int.from_bytes(sample_hash.digest(), "little")
 
     @property
     def steps_remaining(self):
