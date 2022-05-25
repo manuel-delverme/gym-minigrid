@@ -747,12 +747,17 @@ class MiniGridEnv(gym.Env):
         self.np_random, _ = seeding.np_random(seed)
         return [seed]
 
-    def hash(self, size=16):
+    def hash(self):
         """Compute a hash that uniquely identifies the current state of the environment.
         """
+        sample_hash = hashlib.sha256()
         grid_hash = self.hash_grid()
-        to_encode = (*grid_hash, self.agent_dir, *self.agent_pos)
-        return hash(to_encode)
+
+        to_encode = [grid_hash, self.agent_pos, self.agent_dir]
+        for item in to_encode:
+            sample_hash.update(str(item).encode('utf8'))
+
+        return int.from_bytes(sample_hash.digest(), "little")
 
     def hash_grid(self):
         retr = []
@@ -1212,7 +1217,7 @@ class MiniGridEnv(gym.Env):
     def __hash__(self):
         return self.hash()
 
-    @functools.lru_cache(maxsize=10_000)
+    @functools.lru_cache(maxsize=100_000)
     def gen_obs(self):
         """
         Generate the agent's view (partially observable, low-resolution encoding)
